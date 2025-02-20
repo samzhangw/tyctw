@@ -177,15 +177,9 @@ async function analyzeScores() {
     analyzeButton.disabled = true;
     analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 驗證中...';
   }
-  
-  // Lock the invitation code input field during verification
-  const invitationInput = document.getElementById('invitationCode');
-  if (invitationInput) {
-    invitationInput.disabled = true;
-  }
 
   try {
-    const invitationCode = invitationInput.value;
+    const invitationCode = document.getElementById('invitationCode').value;
     // 增加驗證邀請碼是否有填寫
     if (invitationCode.trim() === "") {
       alert("請填寫邀請碼");
@@ -307,10 +301,6 @@ async function analyzeScores() {
     if (analyzeButton) {
       analyzeButton.disabled = false;
       analyzeButton.innerHTML = originalButtonText;
-    }
-    // Re-enable the invitation code input field after validation is complete
-    if (invitationInput) {
-      invitationInput.disabled = false;
     }
     hideLoading();
   }
@@ -515,3 +505,74 @@ updateDarkModeIcon(savedDarkMode);
 document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
 
 document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+let userRating = 0;
+
+function initRating() {
+  const stars = document.querySelectorAll("#starsContainer .star");
+  stars.forEach(star => {
+    star.addEventListener("click", function() {
+      userRating = Number(this.getAttribute("data-value"));
+      updateStarDisplay(userRating);
+    });
+    star.addEventListener("mouseover", function() {
+      const rating = Number(this.getAttribute("data-value"));
+      updateStarDisplay(rating);
+    });
+    star.addEventListener("mouseout", function() {
+      updateStarDisplay(userRating);
+    });
+  });
+
+  const submitRatingButton = document.getElementById("submitRating");
+  submitRatingButton.addEventListener("click", function() {
+    if (userRating === 0) {
+      alert("請選擇評分星數！");
+      return;
+    }
+    this.disabled = true;
+    logUserActivity("user_rating", { rating: userRating });
+    const ratingMsg = document.getElementById("ratingMessage");
+    ratingMsg.textContent = "感謝您的評分！";
+    ratingMsg.style.display = "block";
+  });
+}
+
+function updateStarDisplay(rating) {
+  const stars = document.querySelectorAll("#starsContainer .star");
+  stars.forEach(star => {
+    const starValue = Number(star.getAttribute("data-value"));
+    if (starValue <= rating) {
+      star.classList.add("active");
+    } else {
+      star.classList.remove("active");
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initRating);
+
+
+// 禁用常見的開發工具鍵盤快速鍵：F12、Ctrl+Shift+I/J/C、Ctrl+U
+document.body.onkeydown = function(e) {
+  var keyCode = e.keyCode || e.which;
+  if (
+    keyCode === 123 || // F12
+    (e.ctrlKey && e.shiftKey && (keyCode === 73 || keyCode === 74 || keyCode === 67)) || // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+    (e.ctrlKey && keyCode === 85) // Ctrl+U
+  ) {
+    e.preventDefault();
+    return false;
+  }
+};
+
+// 檢測視窗尺寸變化，若開發者工具可能被打開則封鎖頁面
+(function() {
+  var threshold = 160;
+  setInterval(function() {
+    if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+      document.body.innerHTML = "<h1>禁止使用開發者工具</h1>";
+      throw "開發者工具被禁用";
+    }
+  }, 1000);
+})();
